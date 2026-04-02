@@ -1,94 +1,89 @@
 cmake_minimum_required(VERSION 3.8)
 project(robot_camera_control_sim)
 
+# 强制使用 C++17 标准 (修复 PCL 编译报错的终极杀招)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-
-
-# find dependencies
+# ==========================================
+# 1. 寻找所有必需的包
+# ==========================================
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(shape_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
-find_package(pcl_conversions REQUIRED)
-find_package(cv_bridge REQUIRED)
+
+# 寻找视觉相关库
+find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(pcl_conversions REQUIRED)
 
-add_executable(robot_control src/robot_control.cpp)
-add_executable(d435i_camera_use src/d435i_camera_use.cpp)
-# 新增：碰撞定义节点
+# ==========================================
+# 2. 编译感知层节点：d435i_camera_sim_use
+# ==========================================
+add_executable(d435i_camera_sim_use src/d435i_camera_sim_use.cpp)
+# 告诉编译器 OpenCV 和 PCL 的头文件在哪
+target_include_directories(d435i_camera_sim_use PUBLIC
+  ${OpenCV_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+)
+# 链接 ROS 2 的包
+ament_target_dependencies(d435i_camera_sim_use
+  rclcpp sensor_msgs cv_bridge pcl_conversions
+)
+# 链接第三方的底层二进制库 (解决 undefine reference 报错的关键)
+target_link_libraries(d435i_camera_sim_use
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
+)
+
+# ==========================================
+# 3. 编译控制与环境节点
+# ==========================================
+# 碰撞定义节点
 add_executable(my_collision_define src/my_collision_define.cpp)
-# 新增：PCL 扫描可视化窗口节点
+ament_target_dependencies(my_collision_define
+  rclcpp moveit_ros_planning_interface shape_msgs geometry_msgs
+)
+
+# 你的 PCL 扫描进度可视化节点 (同样需要 PCL/OpenCV 依赖)
 add_executable(pcl_scan_workpiece_window src/pcl_scan_workpiece_window.cpp)
-
-target_include_directories(d435i_camera_use PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(d435i_camera_use
-  rclcpp sensor_msgs std_msgs pcl_conversions cv_bridge
+target_include_directories(pcl_scan_workpiece_window PUBLIC
+  ${OpenCV_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
-target_include_directories(robot_control PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(robot_control PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-ament_target_dependencies(
-  robot_control
-  "rclcpp"
-  "geometry_msgs"
-  "sensor_msgs"
-  "std_msgs"
-  "moveit_ros_planning_interface"
-  "tf2_geometry_msgs"
-  "pcl_conversions"
-  "cv_bridge"
-  "PCL"
+ament_target_dependencies(pcl_scan_workpiece_window
+  rclcpp geometry_msgs sensor_msgs cv_bridge pcl_conversions
 )
-ament_target_dependencies(
-  my_collision_define
-  "rclcpp"
-  "moveit_ros_planning_interface"
-  "shape_msgs"
-  "geometry_msgs"
+target_link_libraries(pcl_scan_workpiece_window
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
 )
 
-ament_target_dependencies(
-  pcl_scan_workpiece_window
-  "rclcpp"
-  "geometry_msgs"
-  "sensor_msgs"
-  "pcl_conversions"
-  "cv_bridge"
-)
-
-target_link_libraries(pcl_scan_workpiece_window ${PCL_LIBRARIES})
-target_link_libraries(d435i_camera_use ${PCL_LIBRARIES})
-
-install(TARGETS 
-  robot_control
-  d435i_camera_use
-  my_collision_define
-  pcl_scan_workpiece_window
-  DESTINATION lib/${PROJECT_NAME})
-
-install(DIRECTORY launch
+# ==========================================
+# 4. 安装规则
+# ==========================================
+# 安装 launch, urdf, config 等文件夹 (如果有的话)
+install(DIRECTORY
+  launch
+  # urdf
+  # config
   DESTINATION share/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# 安装生成的可执行文件
+install(TARGETS
+  d435i_camera_sim_use
+  my_collision_define
+  pcl_scan_workpiece_window
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
