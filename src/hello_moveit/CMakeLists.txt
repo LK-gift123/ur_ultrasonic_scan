@@ -124,12 +124,13 @@ ament_target_dependencies(pcl_scan_workpiece_window
 # 7️⃣ ⭐ 链接 PCL + VTK
 # ===============================
 target_link_libraries(my_moveit_use ${PCL_LIBRARIES})
-target_link_libraries(pcl_scan_workpiece_window ${PCL_LIBRARIES} ${X11_LIBRARIES})
+
 
 # ⭐【关键新增】
 target_link_libraries(pcl_scan_workpiece_window
   ${PCL_LIBRARIES}
   ${VTK_LIBRARIES}
+  ${X11_LIBRARIES}
 )
 
 # ===============================

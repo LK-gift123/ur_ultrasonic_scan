@@ -16,12 +16,12 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRG
 std::mutex cloud_mutex;
 
 // ===============================
-// ROS 2 节点类：负责接收扫描数据
+// ROS 2 节点类：负责接收扫描数据与终端广播
 // ===============================
 class ScanVisualizer : public rclcpp::Node
 {
 public:
-    ScanVisualizer() : Node("pcl_scan_workpiece_window")
+    ScanVisualizer() : Node("pcl_scan_workpiece_window"), point_count_(0)
     {
         // 订阅 scan_point，接收 PointStamped 消息
         subscription_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
@@ -29,36 +29,51 @@ public:
             std::bind(&ScanVisualizer::pointCallback, this, std::placeholders::_1)
         );
 
-        RCLCPP_INFO(this->get_logger(), "PCL 显示窗口启动，等待扫描数据...");
+        RCLCPP_INFO(this->get_logger(), "PCL 显示窗口及终端广播启动，等待扫描数据...");
     }
 
 private:
     rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr subscription_;
+    int point_count_; // 记录当前是第几个扫查点
 
     void pointCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg)
     {
         std::lock_guard<std::mutex> lock(cloud_mutex);
+
+        // 1. 计数器累加
+        point_count_++;
 
         pcl::PointXYZRGB p;
         p.x = msg->point.x;
         p.y = msg->point.y;
         p.z = msg->point.z;
 
-        // 根据传输过来的帧 ID 解析健康状态
-        // "0" 代表健康（白色），"1" 代表不健康（红色）
+        // 2. 解析健康状态并执行彩色终端打印
+        // ANSI 颜色代码： \033[1;32m 是加粗绿色，\033[1;31m 是加粗红色，\033[0m 是恢复默认颜色
         if (msg->header.frame_id == "0")
         {
-            p.r = 255; p.g = 255; p.b = 255; // 白色
+            // 健康状态 -> PCL 白色，终端绿色
+            p.r = 255; p.g = 255; p.b = 255; 
+            
+            // 使用 printf 严格按照格式输出，避免多余时间戳
+            printf("\033[1;32m第%d个扫查点,坐标为(x:%.4f,y:%.4f,z:%.4f)\n健康状态：健康\n\n\033[0m", 
+                   point_count_, p.x, p.y, p.z);
         }
         else if (msg->header.frame_id == "1")
         {
-            p.r = 255; p.g = 0; p.b = 0;     // 红色
+            // 不健康状态 -> PCL 红色，终端红色
+            p.r = 255; p.g = 0; p.b = 0;     
+            
+            printf("\033[1;31m第%d个扫查点,坐标为(x:%.4f,y:%.4f,z:%.4f)\n健康状态：不健康\n\n\033[0m", 
+                   point_count_, p.x, p.y, p.z);
         }
         else 
         {
-            p.r = 0; p.g = 255; p.b = 0;     // 兜底色 (绿色)
+            // 兜底色 -> PCL 绿色
+            p.r = 0; p.g = 255; p.b = 0;     
         }
 
+        // 3. 将点压入 PCL 点云对象
         cloud->points.push_back(p);
     }
 };
@@ -86,7 +101,7 @@ int main(int argc, char **argv)
                              0.0, 0.0, 1.0);  
 
     // ===============================
-    // [终极重构] 生成并绘制精准尺寸的半透明圆柱体 Mesh (代替长方体)
+    // 生成并绘制精准尺寸的半透明圆柱体 Mesh (代替长方体)
     // ===============================
     // 1. 定义圆柱体参数 (对齐我们在 Gazebo 中的放置位置和尺寸)
     double radius = 0.15; // 半径 15cm
@@ -133,8 +148,7 @@ int main(int argc, char **argv)
     }
 
     // ===============================
-    // [核心修改] 统一应用半透明木纹颜色 (Browns/Tan tones)
-    // 彻底废除 addCube，改用 PCL 统一颜色接口
+    // 统一应用半透明木纹颜色 (Browns/Tan tones)
     // ===============================
     // 1. 获取所有以 "line_" 结尾的几何体 ID (包含侧面、顶面、底面线条)
     std::vector<std::string> shape_ids;

@@ -24,7 +24,7 @@ endif()
 
 # 补丁打完后，再放心大胆地寻找 PCL
 set(PCL_DIR "/usr/local/share/pcl-1.13") 
-find_package(PCL 1.13 EXACT REQUIRED COMPONENTS common io visualization filters segmentation sample_consensus)
+find_package(PCL 1.13 EXACT REQUIRED COMPONENTS common io visualization filters segmentation sample_consensus features surface)
 
 # =========================================================
 # 2. 引入 VTK 库 (PCL 1.13 的可视化窗口强依赖 VTK，防闪退)

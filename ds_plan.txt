@@ -1,0 +1,7 @@
+lk@lk-ZERO:~/ur_sim$ source install/setup.bash
+lk@lk-ZERO:~/ur_sim$ ros2 launch robot_camera_control_sim sim_bringup.launch.py 
+[INFO] [launch]: All log files can be found below /home/lk/.ros/log/2026-04-02-14-07-52-390941-lk-ZERO-6349
+[INFO] [launch]: Default logging verbosity is set to INFO
+Using load_yaml() directly is deprecated. Use xacro.load_yaml() instead.
+Using load_yaml() directly is deprecated. Use xacro.load_yaml() instead.
+[ERROR] [launch]: Caught exception in launch (see debug for traceback): "File /home/lk/ur_sim/install/ur7e_moveit_config/share/ur7e_moveit_config/config/moveit_cpp.yaml doesn't exist"
