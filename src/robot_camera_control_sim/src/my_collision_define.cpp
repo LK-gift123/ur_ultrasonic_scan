@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   box.id = "cyliden_1";
   shape_msgs::msg::SolidPrimitive box_primitive;
   box_primitive.type = box_primitive.CYLINDER;
-  box_primitive.dimensions = {0.15, 0.1};
+  box_primitive.dimensions = {0.10, 0.15};
   box.primitives.push_back(box_primitive);
   geometry_msgs::msg::Pose box_pose;
   box_pose.orientation.w = 1.0;
