@@ -1,0 +1,27 @@
+lk@lk-ZERO:~/ur_sim$ colcon build
+Starting >>> mybot_description
+Starting >>> camera_use
+Starting >>> hello_moveit
+Starting >>> py_camera_use
+Starting >>> realsense2_description
+Starting >>> robot_camera_control_sim
+Finished <<< hello_moveit [0.36s]                                                                                                                  
+Finished <<< mybot_description [0.39s]
+Finished <<< camera_use [0.39s]                                                                                                                                     
+Starting >>> ur7e_moveit_config
+Finished <<< realsense2_description [0.40s]
+Finished <<< ur7e_moveit_config [0.11s]                                                                                             
+Finished <<< py_camera_use [0.94s]                                                              
+--- stderr: robot_camera_control_sim                         
+** WARNING ** io features related to pcap will be disabled
+CMake Error at CMakeLists.txt:98 (install):
+  install TARGETS given target "robot_control_sim" which does not exist.
+
+
+gmake: *** [Makefile:349：cmake_check_build_system] 错误 1
+---
+Failed   <<< robot_camera_control_sim [2.44s, exited with code 2]
+
+Summary: 6 packages finished [2.91s]
+  1 package failed: robot_camera_control_sim
+  1 package had stderr output: robot_camera_control_sim

@@ -6,12 +6,11 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 
-// PCL 基础与 IO (保存 PCD 功能)
+// PCL 基础
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/io/pcd_io.h> 
 
 // PCL 滤波与分割算法
 #include <pcl/filters/voxel_grid.h>
@@ -22,10 +21,12 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/filter.h>               
+
+// ⭐ 新增：欧式聚类提取头文件
 #include <pcl/segmentation/extract_clusters.h>
 
-// PCL MLS 平滑
-#include <pcl/surface/mls.h>
+// PCL 特征提取
+#include <pcl/features/normal_3d_omp.h>       
 #include <pcl/search/kdtree.h>                
 
 #include <mutex>
@@ -34,34 +35,55 @@
 using std::placeholders::_1;
 
 // =========================================================================
-// ⭐ 核心算法参数配置区 
+// ⭐ 核心算法参数配置区 (Algorithm Configuration Zone)
 // =========================================================================
 struct FilterConfig {
+    // 1. 体素降采样 (m)
     float voxel_leaf_size = 0.005f; 
+
+    // 2. 直通滤波 Z 轴范围 (m)
     float passthrough_min_z = 0.8f;
     float passthrough_max_z = 1.25f;
+
+    // 3. RANSAC 桌面判定阈值 (m)
     float ransac_distance_threshold = 0.01f;
-    
+
+    // ===================================================
+    // 4. ⭐ 欧式聚类参数 (Euclidean Clustering)
+    // ===================================================
+    // 变量作用：判断两个点是否属于同一个物体的最大距离。
+    // 单位：米 (m)。0.02f 代表 2cm。
+    // 调节效果：如果设得太小（如 0.001），一个圆柱体会被切成无数块碎片；
+    // 如果设得太大（如 0.1），靠近圆柱体的其他杂物会被错误地合并成一个物体。
+    // 因为前面的降采样是 5mm，所以这里的容差必须大于 5mm，2cm(0.02) 是非常稳妥的值。
     float cluster_tolerance = 0.02f;
+    
+    // 变量作用：作为一个独立物体（Cluster）必须满足的最少点数。
+    // 调节效果：极其有效地过滤掉空间中成群的“马赛克噪点”。100 个点起步。
     int cluster_min_size = 100;
+    
+    // 变量作用：一个物体的最大点数限制。
     int cluster_max_size = 25000;
 
+    // 5. SOR 统计离群点滤波参数 (针对提取出的聚类)
     int sor_mean_k = 50;              
     float sor_stddev_thresh = 1.0f;   
 
-    float mls_search_radius = 0.03f;
-    int mls_polynomial_order = 2;
-
+    // 6. 法向量计算参数 (m)
+    float normal_search_radius = 0.03f;
     int normal_display_step = 3; 
     float normal_display_scale = 0.02f;
 };
 
+// =========================================================================
+// 主节点类定义
+// =========================================================================
 class CameraSimUseNode : public rclcpp::Node
 {
 public:
     CameraSimUseNode() : Node("d435i_camera_sim_use")
     {
-        RCLCPP_INFO(this->get_logger(), "视觉感知节点已启动：单帧截取模式 (Scan-and-Plan)...");
+        RCLCPP_INFO(this->get_logger(), "视觉感知节点已启动：正在执行带【欧式聚类实例分割】的 7 步感知流水线...");
 
         rgb_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
             "/camera/camera/color/image_raw", 10, std::bind(&CameraSimUseNode::rgb_callback, this, _1));
@@ -69,7 +91,7 @@ public:
         pc_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
             "/camera/camera/depth/color/points", 10, std::bind(&CameraSimUseNode::pc_callback, this, _1));
 
-        viewer_ = std::make_shared<pcl::visualization::PCLVisualizer>("PCL Final Static Surface");
+        viewer_ = std::make_shared<pcl::visualization::PCLVisualizer>("PCL Final Target with Normals");
         viewer_->setBackgroundColor(0.05, 0.05, 0.05); 
         viewer_->addCoordinateSystem(0.1);             
 
@@ -98,11 +120,7 @@ private:
 
     std::shared_ptr<pcl::visualization::PCLVisualizer> viewer_;
     rclcpp::TimerBase::SharedPtr ui_timer_;
-    
     bool is_first_cloud_ = true;
-    
-    // ⭐ 单帧扫描锁
-    bool is_scanned_ = false; 
 
     void rgb_callback(const sensor_msgs::msg::Image::SharedPtr msg)
     {
@@ -114,26 +132,25 @@ private:
         }
     }
 
+    // =========================================================================
+    // ⭐ 终极大脑：7步目标提取与特征管线
+    // NaN -> Voxel -> PassThrough -> RANSAC -> Clustering -> SOR -> OMP
+    // =========================================================================
     void pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
     {
-        // 极其重要：如果已经成功扫描并处理过一帧了，直接返回，不再浪费 CPU！
-        if (is_scanned_) {
-            return; 
-        }
-
         std::lock_guard<std::mutex> lock(data_mutex_);
         
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr raw_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromROSMsg(*msg, *raw_cloud);
         if (raw_cloud->empty()) return;
 
-        // 【步骤 1：去 NaN】 
+        // 【步骤 1：去除 NaN 点】 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr clean_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         std::vector<int> indices;
         pcl::removeNaNFromPointCloud(*raw_cloud, *clean_cloud, indices);
         if (clean_cloud->empty()) return;
 
-        // 【步骤 2：降采样】
+        // 【步骤 2：体素降采样】
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxel_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::VoxelGrid<pcl::PointXYZRGB> vg;
         vg.setInputCloud(clean_cloud); 
@@ -149,10 +166,11 @@ private:
         pt.filter(*pt_cloud); 
         if (pt_cloud->points.size() < 10) return; 
 
-        // 【步骤 4：RANSAC 去桌面】 
+        // 【步骤 4：RANSAC 平面分割】 (剥离桌面)
         pcl::SACSegmentation<pcl::PointXYZRGB> seg;
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);     
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients); 
+        
         seg.setOptimizeCoefficients(true);
         seg.setModelType(pcl::SACMODEL_PLANE); 
         seg.setMethodType(pcl::SAC_RANSAC);    
@@ -167,73 +185,60 @@ private:
         pcl::ExtractIndices<pcl::PointXYZRGB> extract;
         extract.setInputCloud(pt_cloud);
         extract.setIndices(inliers);
-        extract.setNegative(true); 
+        extract.setNegative(true); // 留下非平面的物体群
         extract.filter(*objects_cloud);
         if (objects_cloud->points.size() < 10) return;
 
-        // 【步骤 5：聚类提取】 
+        // ==========================================
+        // 【步骤 5：欧式聚类提取】 (锁定目标工件)
+        // ==========================================
+        // 为聚类创建一个 KD-Tree 搜索树
         pcl::search::KdTree<pcl::PointXYZRGB>::Ptr cluster_tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
         cluster_tree->setInputCloud(objects_cloud);
-        std::vector<pcl::PointIndices> cluster_indices; 
+
+        std::vector<pcl::PointIndices> cluster_indices; // 存放所有被分离出来的聚类组
         pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
         ec.setClusterTolerance(config_.cluster_tolerance); 
         ec.setMinClusterSize(config_.cluster_min_size);
         ec.setMaxClusterSize(config_.cluster_max_size);
         ec.setSearchMethod(cluster_tree);
         ec.setInputCloud(objects_cloud);
-        ec.extract(cluster_indices); 
+        ec.extract(cluster_indices); // 执行聚类
 
-        if (cluster_indices.empty()) return; 
+        if (cluster_indices.empty()) {
+            // 没有找到符合大小要求的物体
+            return; 
+        }
 
+        // ⭐ PCL 的聚类算法默认会按照点数从多到少对聚类进行排序。
+        // 所以 cluster_indices[0] 绝对就是桌面上最大的那个物体（我们的圆柱体）！
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target_workpiece_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::copyPointCloud(*objects_cloud, cluster_indices[0], *target_workpiece_cloud);
 
-        // 【步骤 6：SOR 滤波】 
+        // ==========================================
+        // 【步骤 6：SOR 统计离群点滤波】 (只针对提取出的最大工件)
+        // ==========================================
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr sor_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-        sor.setInputCloud(target_workpiece_cloud); 
+        sor.setInputCloud(target_workpiece_cloud); // 输入变为单纯的目标工件
         sor.setMeanK(config_.sor_mean_k);
         sor.setStddevMulThresh(config_.sor_stddev_thresh);
         sor.filter(*sor_cloud); 
 
-        if (sor_cloud->points.size() < 50) {
-            RCLCPP_WARN(this->get_logger(), "工件点云数量太少，跳过此帧");
-            return;
-        }
-
-        RCLCPP_INFO(this->get_logger(), "成功锁定工件！正在执行单帧 MLS 平滑与法向计算，请稍候...");
-
-        // 【步骤 7：MLS 单帧处理】
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr mls_cloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-        pcl::MovingLeastSquares<pcl::PointXYZRGB, pcl::PointXYZRGBNormal> mls;
+        // 【步骤 7：OMP 多核法向量计算】
+        pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne;
         pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>());
-        
-        mls.setComputeNormals(true); 
-        mls.setInputCloud(sor_cloud);
-        mls.setPolynomialOrder(config_.mls_polynomial_order); 
-        mls.setSearchMethod(tree);
-        mls.setSearchRadius(config_.mls_search_radius); 
-        mls.process(*mls_cloud);
+        ne.setSearchMethod(tree);
+        ne.setInputCloud(sor_cloud);
+        ne.setRadiusSearch(config_.normal_search_radius); 
+        ne.compute(*current_normals_);
 
-        // ==========================================
-        // ⭐ 修复与新增：剔除包含 NaN 的致命法向量，防止内存与渲染器崩溃！
-        // ==========================================
-        std::vector<int> dummy_indices;
-        pcl::removeNaNNormalsFromPointCloud(*mls_cloud, *mls_cloud, dummy_indices);
-
-        // 刷新渲染缓存
-        pcl::copyPointCloud(*mls_cloud, *current_cloud_);
-        pcl::copyPointCloud(*mls_cloud, *current_normals_);
-
-        // ⭐ 将完美的一帧保存到本地！
-        std::string file_name = "target_cylinder_smoothed.pcd";
-        pcl::io::savePCDFileASCII(file_name, *mls_cloud);
-        RCLCPP_INFO(this->get_logger(), "🎉 处理完成！点云已保存至当前运行目录: %s", file_name.c_str());
-
-        // ⭐ 闭锁：设为 true，以后再进来的点云直接被 return 丢弃
-        is_scanned_ = true; 
+        pcl::copyPointCloud(*sor_cloud, *current_cloud_);
     }
 
+    // =========================================================================
+    // UI 渲染循环 
+    // =========================================================================
     void update_ui()
     {
         std::lock_guard<std::mutex> lock(data_mutex_);
@@ -253,7 +258,12 @@ private:
                 
                 viewer_->setCameraPosition(0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0);
                 is_first_cloud_ = false;
-            } 
+            } else {
+                viewer_->updatePointCloud<pcl::PointXYZRGB>(current_cloud_, "cloud");
+                viewer_->removePointCloud("normals");
+                viewer_->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(
+                    current_cloud_, current_normals_, config_.normal_display_step, config_.normal_display_scale, "normals");
+            }
         }
         viewer_->spinOnce(1, true); 
     }

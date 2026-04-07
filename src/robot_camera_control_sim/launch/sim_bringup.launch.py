@@ -25,6 +25,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    pcl_MLS_point_cloud_output_node = Node(
+    package='robot_camera_control_sim',
+    executable='view_pcd_result',
+    output='screen'
+    )
+
+
     # 4. 包含 碰撞定义节点 (⭐ 延时 5 秒启动，等待 MoveIt 完全加载)
     collision_define_node = TimerAction(
         period=5.0,
@@ -41,5 +48,6 @@ def generate_launch_description():
         gazebo_launch,
         moveit_rviz_launch,
         pcl_window_node,
-        collision_define_node
+        collision_define_node,
+        pcl_MLS_point_cloud_output_node,
     ])
