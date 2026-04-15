@@ -14,7 +14,7 @@
   <depend>sensor_msgs</depend>
   <depend>shape_msgs</depend>
   <depend>std_msgs</depend>
-
+  <depend>nav_msgs</depend>
   <depend>moveit_ros_planning_interface</depend>
 
   <depend>cv_bridge</depend>

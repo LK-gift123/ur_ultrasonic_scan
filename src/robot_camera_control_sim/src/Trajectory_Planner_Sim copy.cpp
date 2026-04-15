@@ -1,14 +1,14 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <nav_msgs/msg/path.hpp>       // ⭐ 新增：路径消息头文件
-#include <geometry_msgs/msg/pose_stamped.hpp> // ⭐ 新增：Path 里的基本单元
 
-// PCL 与数学库
+// PCL 相关
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/common/common.h>
+
+// Eigen 矩阵与数学库
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -21,9 +21,12 @@ using PointT = pcl::PointXYZRGBNormal;
 using PointCloudT = pcl::PointCloud<PointT>;
 
 struct PlannerConfig {
-    float slice_step = 0.01f;        
-    float slice_thickness = 0.002f;
-    float gap_threshold = 0.02f;     
+    float slice_step = 0.01f;        // X 轴切片步长 (每条扫描线的间距 1cm)
+    float slice_thickness = 0.002f;  // 切片厚度
+    float gap_threshold = 0.02f;     // 缺口打断阈值 (2cm)
+    
+    // ⭐ 新增：沿扫描线的轨迹点间距 (5mm)。
+    // 保证机械臂收到的轨迹既不会太密导致卡顿，也不会太稀疏导致偏离曲面。
     float point_spacing = 0.005f;    
 };
 
@@ -32,16 +35,10 @@ class TrajectoryPlannerNode : public rclcpp::Node
 public:
     TrajectoryPlannerNode() : Node("trajectory_planner_sim")
     {
-        RCLCPP_INFO(this->get_logger(), "🚀 轨迹规划与可视化节点已启动！");
+        RCLCPP_INFO(this->get_logger(), "🚀 轨迹规划节点已启动！正在读取平滑后的点云数据...");
 
-        // 1. 保留原有的位姿数组发布器 (用于看箭头方向)
-        trajectory_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/planned_poses", 10);
-        
-        // 2. ⭐ 新增：路径连线发布器 (用于看连续扫描线)
-        path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/planned_path", 10);
-
+        trajectory_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/planned_trajectory", 10);
         calculate_trajectory();
-
         publish_timer_ = this->create_wall_timer(
             std::chrono::seconds(1), 
             std::bind(&TrajectoryPlannerNode::publish_loop, this));
@@ -49,12 +46,10 @@ public:
 
 private:
     rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr trajectory_pub_;
-    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_; // ⭐ 路径发布器
     rclcpp::TimerBase::SharedPtr publish_timer_;
     PlannerConfig config_;
     
     geometry_msgs::msg::PoseArray saved_pose_array_; 
-    nav_msgs::msg::Path saved_path_; // ⭐ 存储计算好的连线数据
     bool has_trajectory_ = false;
 
     static bool compareByY(const PointT& p1, const PointT& p2) {
@@ -64,22 +59,20 @@ private:
     void calculate_trajectory()
     {
         PointCloudT::Ptr cloud(new PointCloudT);
-        // ⭐ 修改 1：读取经过 TF 转换后的新点云文件
-        if (pcl::io::loadPCDFile<PointT>("target_cylinder_base_link.pcd", *cloud) == -1) {
-            RCLCPP_ERROR(this->get_logger(), "读取失败！请先运行 point_tf_position 节点！");
+        std::string file_name = "target_cylinder_smoothed.pcd";
+        if (pcl::io::loadPCDFile<PointT>(file_name, *cloud) == -1) {
+            RCLCPP_ERROR(this->get_logger(), "读取失败！");
             return;
         }
 
         PointT min_pt, max_pt;
         pcl::getMinMax3D(*cloud, min_pt, max_pt);
 
-        // ⭐ 修改 2：现在轨迹的参考系是机械臂基座了！
-        saved_pose_array_.header.frame_id = "base_link"; 
-        saved_path_.header.frame_id = "base_link";
-
+        saved_pose_array_.header.frame_id = "camera_depth_optical_frame"; 
         int slice_index = 0; 
 
         for (float current_x = min_pt.x; current_x <= max_pt.x; current_x += config_.slice_step) {
+            
             PointCloudT::Ptr slice_cloud(new PointCloudT);
             pcl::PassThrough<PointT> pass;
             pass.setInputCloud(cloud);
@@ -94,11 +87,14 @@ private:
 
             std::vector<std::vector<PointT>> fragmented_lines;
             std::vector<PointT> current_line;
+            
             current_line.push_back(sorted_points[0]);
-            PointT last_added_point = sorted_points[0];
+            PointT last_added_point = sorted_points[0]; // ⭐ 记录上一个加入轨迹的点
 
             for (size_t i = 1; i < sorted_points.size(); ++i) {
                 PointT p2 = sorted_points[i];
+                
+                // 1. 缺口检测 (计算与数组中上一个点的距离)
                 PointT p1 = sorted_points[i - 1];
                 float dist_to_prev = std::sqrt(std::pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2) + std::pow(p1.z - p2.z, 2));
 
@@ -110,7 +106,12 @@ private:
                     continue;
                 }
 
-                float dist_to_last_added = std::sqrt(std::pow(last_added_point.x - p2.x, 2) + std::pow(last_added_point.y - p2.y, 2) + std::pow(last_added_point.z - p2.z, 2));
+                // 2. ⭐ 沿线均匀降采样 (计算与上一个【被采纳】的轨迹点的距离)
+                float dist_to_last_added = std::sqrt(std::pow(last_added_point.x - p2.x, 2) + 
+                                                     std::pow(last_added_point.y - p2.y, 2) + 
+                                                     std::pow(last_added_point.z - p2.z, 2));
+                
+                // 只有当距离超过 5mm 时，才算作一个有效的机械臂航点
                 if (dist_to_last_added >= config_.point_spacing) {
                     current_line.push_back(p2);
                     last_added_point = p2;
@@ -139,32 +140,21 @@ private:
                     pose.orientation.z = q.z();
                     pose.orientation.w = q.w();
 
-                    // 1. 添加到位姿数组 (用于显示箭头)
                     saved_pose_array_.poses.push_back(pose);
-
-                    // 2. ⭐ 添加到路径消息 (用于显示连线)
-                    geometry_msgs::msg::PoseStamped ps;
-                    ps.header = saved_path_.header;
-                    ps.pose = pose;
-                    saved_path_.poses.push_back(ps);
                 }
             }
             slice_index++; 
         }
 
         has_trajectory_ = true;
-        RCLCPP_INFO(this->get_logger(), "🎉 轨迹与连线规划完成！");
+        RCLCPP_INFO(this->get_logger(), "🎉 轨迹规划完成！共生成 %zu 个稀疏化位姿，非常适合机械臂执行。", saved_pose_array_.poses.size());
     }
 
     void publish_loop()
     {
         if (has_trajectory_) {
-            auto now = this->now();
-            saved_pose_array_.header.stamp = now;
-            saved_path_.header.stamp = now;
-
+            saved_pose_array_.header.stamp = this->now();
             trajectory_pub_->publish(saved_pose_array_);
-            path_pub_->publish(saved_path_); // ⭐ 同时发布连线话题
         }
     }
 };
