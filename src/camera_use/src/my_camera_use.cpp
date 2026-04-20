@@ -52,8 +52,8 @@ public:
 
     // --- 1. 直通滤波 (空间裁剪) ---
     bool enable_passthrough_filter_ = true; 
-    float pass_z_min_ = 0.25f; // 【修改】从0.20提至0.25。效果：更干净地切除机械臂在高空的挥舞干扰。
-    float pass_z_max_ = 0.38f; // 【维持】包含35cm桌面。
+    float pass_z_min_ = 0.26f; // 【修改】从0.20提至0.25。效果：更干净地切除机械臂在高空的挥舞干扰。
+    float pass_z_max_ = 0.37f; // 【维持】包含35cm桌面。
     
     // --- 2. 体素降采样 (细化网格) ---
     bool enable_voxel_filter_  = true;      
@@ -61,11 +61,11 @@ public:
     
     // --- 3. RANSAC (精准剥离桌面) ---
     bool enable_ransac_filter_ = true;
-    float ransac_distance_threshold_ = 0.003f; // ⭐【核心修改】从4mm降至1.5mm！效果：这是解决工件“腰斩”的关键！由于相机存在1-2mm误差，原先的4mm极容易把5mm凹槽当成桌面吃掉。2.5mm能死死保住5mm的凹槽区。
+    float ransac_distance_threshold_ = 0.0025f; // ⭐【核心修改】从4mm降至1.5mm！效果：这是解决工件“腰斩”的关键！由于相机存在1-2mm误差，原先的4mm极容易把5mm凹槽当成桌面吃掉。2.5mm能死死保住5mm的凹槽区。
     
     // --- 4. 欧式聚类 (提取目标) ---
     bool enable_cluster_extraction_ = true;
-    float cluster_tolerance_ = 0.040f; // ⭐【核心修改】从1.5cm暴增至3cm！效果：即使5mm凹槽处由于反光出现了少许空洞（断层），3cm的广域容差也能把断开的“T”字上下两部分强行粘在同一个聚类里，彻底防止工件解体。
+    float cluster_tolerance_ = 0.030f; // ⭐【核心修改】从1.5cm暴增至3cm！效果：即使5mm凹槽处由于反光出现了少许空洞（断层），3cm的广域容差也能把断开的“T”字上下两部分强行粘在同一个聚类里，彻底防止工件解体。
     int min_cluster_size_ = 30;        // 【修改】降低门槛，确保小工件不被丢弃。
 
     // --- 5. 联合去噪流水线 ---
