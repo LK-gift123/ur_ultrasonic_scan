@@ -48,7 +48,7 @@ def generate_launch_description():
     spawn_table_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
-        arguments=['-entity', 'workpieces', '-file', table_urdf_path,'-x', '0.3', '-y', '0.0', '-z', '0.82'],
+        arguments=['-entity', 'workpieces', '-file', table_urdf_path,'-x', '0.2', '-y', '0.0', '-z', '0.85'],
         output='screen'
     )
 

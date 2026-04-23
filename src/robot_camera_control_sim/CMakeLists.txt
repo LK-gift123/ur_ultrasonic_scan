@@ -29,6 +29,9 @@ find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(pcl_conversions REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 # ==========================================
 # 2. 编译各节点
@@ -50,7 +53,8 @@ ament_target_dependencies(pcl_scan_workpiece_window rclcpp geometry_msgs sensor_
 target_link_libraries(pcl_scan_workpiece_window ${OpenCV_LIBS} ${PCL_LIBRARIES})
 
 add_executable(my_collision_define src/my_collision_define.cpp)
-ament_target_dependencies(my_collision_define rclcpp moveit_ros_planning_interface shape_msgs geometry_msgs)
+ament_target_dependencies(my_collision_define rclcpp moveit_ros_planning_interface shape_msgs geometry_msgs pcl_conversions)
+target_link_libraries(my_collision_define ${PCL_LIBRARIES})
 
 # ⭐ 新增：编译坐标变换节点
 add_executable(point_tf_position src/point_tf_position.cpp)
