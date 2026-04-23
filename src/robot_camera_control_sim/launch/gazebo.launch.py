@@ -35,6 +35,7 @@ def generate_launch_description():
     pkg_share = FindPackageShare(package=package_name).find(package_name) 
     urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
     table_xacro_path = os.path.join(pkg_share, 'urdf/table.xacro')
+    
 
     table_urdf_path = '/tmp/table.urdf'
 
@@ -47,7 +48,7 @@ def generate_launch_description():
     spawn_table_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
-        arguments=['-entity', 'workpieces', '-file', table_urdf_path,'-x', '0.4', '-y', '0.0', '-z', '0.05'],
+        arguments=['-entity', 'workpieces', '-file', table_urdf_path,'-x', '0.3', '-y', '0.0', '-z', '0.82'],
         output='screen'
     )
 

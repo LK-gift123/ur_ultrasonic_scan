@@ -1,3 +1,8 @@
 git add .
 git commit -m "修复了启动launch报错问题并更新了圆柱体实体模型"
 git push
+
+
+killall -9 gzserver
+killall -9 gzclient
+killall -9 gazebo

@@ -1,0 +1,42 @@
+<robot name="optical_platform_description">
+  <link
+    name="table_base_link">
+    <inertial>
+      <origin
+        xyz="-4.4409E-16 1.3878E-16 -0.17855"
+        rpy="0 0 0" />
+      <mass
+        value="188.46" />
+      <inertia
+        ixx="25.957"
+        ixy="4.4317E-13"
+        ixz="-1.1096E-17"
+        iyy="9.5008"
+        iyz="5.1315E-16"
+        izz="33.607" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://optical_platform_description/meshes/table_base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://optical_platform_description/meshes/table_base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

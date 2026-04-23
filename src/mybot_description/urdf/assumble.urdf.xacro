@@ -9,8 +9,8 @@
   <!-- 将桌子固定到世界坐标系（world 已在 ur7e.urdf 中定义） -->
   <joint name="table_to_world" type="fixed">
     <parent link="world"/>
-    <child link="box"/>
-    <origin rpy="0 0 0" xyz="0 0.3 0"/>   <!-- 桌子位于世界原点，可根据需要调整 -->
+    <child link="table_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>   <!-- 桌子位于世界原点，可根据需要调整 -->
   </joint>
   
 </robot>

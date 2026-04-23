@@ -1,0 +1,31 @@
+# 在文件开头导入必要的模块
+from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+import os
+
+# 在 generate_launch_description() 函数内添加
+def generate_launch_description():
+    # ... 原有的启动内容（Gazebo, robot_state_publisher, spawn_entity 等）...
+
+    # ========== 新增：光学平台加载 ==========
+    # 获取光学平台包的安装路径
+    optical_platform_dir = get_package_share_directory('optical_platform_description')
+    optical_urdf = os.path.join(optical_platform_dir, 'urdf', 'optical_platform_description.urdf')
+
+    # 使用 spawn_entity.py 加载平台
+    spawn_optical_platform = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        arguments=[
+            '-entity', 'optical_platform',          # 实体名称
+            '-file', optical_urdf,                  # URDF 文件路径
+            '-x', '0.0', '-y', '0.0', '-z', '0.0', # 放置位置（米）
+            '-R', '0.0', '-P', '0.0', '-Y', '0.0'   # 旋转（滚转、俯仰、偏航，单位弧度）
+        ],
+        output='screen'
+    )
+
+    # 将 spawn_optical_platform 添加到 LaunchDescription
+    ld.add_action(spawn_optical_platform)
+    
+    return ld

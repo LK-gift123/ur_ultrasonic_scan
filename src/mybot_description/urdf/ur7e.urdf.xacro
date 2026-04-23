@@ -59,7 +59,17 @@
           this location. Nor can they rely on the existence of the macro.
   -->
   <!-- create link fixed to the "world" -->
+  <xacro:include filename="$(find optical_platform_description)/urdf/optical_platform_description.urdf" />
+
+  <!-- ========== 固定关节：将桌子固定到世界坐标系 ========== -->
+  <joint name="table_to_world" type="fixed">
+    <parent link="world"/>
+    <child link="table_base_link"/>   <!-- 注意：桌子的 root link 名称必须与此一致 -->
+    <origin xyz="0.0 0.0 0.8" rpy="0 0 0"/>
+  </joint>
+  
   <link name="world"/>
+
   <link name="ground_plane">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -300,7 +310,7 @@
   <!--改变机械臂在仿真环境中的位置-->
   <!-- base_joint fixes base_link to the environment -->
   <joint name="base_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <origin rpy="0 0 0" xyz="-0.4 -0.4 0.8"/>
     <parent link="world"/>
     <child link="base_link"/>
   </joint>
@@ -409,7 +419,7 @@
 
   <xacro:include filename="$(find realsense2_description)/urdf/_d435i.urdf.xacro" />
   <xacro:sensor_d435i parent="world" name="camera" use_nominal_extrinsics="true">
-      <origin xyz="0.4 0 1.2" rpy="0 1.5708 0"/> 
+      <origin xyz="0.4 0 2.2" rpy="0 1.5708 0"/> 
   </xacro:sensor_d435i>
 
   <gazebo reference="camera_link">
