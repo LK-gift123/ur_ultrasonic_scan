@@ -77,24 +77,27 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <box size="5 5 0"/>
+        <box size="5 5 0.01"/>
       </geometry>
       <material name="ground_white">
         <color rgba="1 1 1 0.5"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 -0.005"/>
       <geometry>
-        <box size="5 5 0"/>
+        <box size="5 5 0.01"/>
       </geometry>
     </collision>
   </link>
   <joint name="ground_plane_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 -0.01"/>
+    <origin rpy="0 0 0" xyz="0 0 -0.005"/>
     <parent link="world"/>
     <child link="ground_plane"/>
   </joint>
+
+  <!-- ros2_control 代码起始 -->
+  
 
   <ros2_control name="ur7e" type="system">
     <hardware>
@@ -171,6 +174,9 @@
       <state_interface name="effort"/>
     </joint>
   </ros2_control>
+
+
+  <!-- ros2_control 代码结束 -->
 
   <!-- Add URDF transmission elements (for ros_control) -->
   <!--<xacro:ur_arm_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />-->

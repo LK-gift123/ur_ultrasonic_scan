@@ -104,7 +104,7 @@ def generate_launch_description():
     load_joint_trajectory_controller = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['ur7e_manipulater_controller', '--controller-manager', '/controller_manager'],
+        arguments=['ur7e_manipulator_controller', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 

@@ -1,3 +1,0 @@
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur7e">
-  <xacro:include filename="$(find mybot_description)/urdf/assumble.urdf.xacro" />
-</robot>

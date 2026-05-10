@@ -78,7 +78,7 @@ private:
 
     void execute_mission()
     {
-        static const std::string PLANNING_GROUP = "ur7e_manipulater";
+        static const std::string PLANNING_GROUP = "ur7e_manipulator";
         auto move_group = std::make_shared<moveit::planning_interface::MoveGroupInterface>(shared_from_this(), PLANNING_GROUP);
         if (!trajectory_frame_id_.empty()) move_group->setPoseReferenceFrame(trajectory_frame_id_);
 
