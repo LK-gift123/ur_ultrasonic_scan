@@ -14,18 +14,18 @@
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="home_pose_1" group="ur7e_manipulator">
-        <joint name="elbow_joint" value="1.5707"/>
-        <joint name="shoulder_lift_joint" value="-1.5707"/>
+        <joint name="elbow_joint" value="1.5708"/>
+        <joint name="shoulder_lift_joint" value="-1.5708"/>
         <joint name="shoulder_pan_joint" value="0"/>
-        <joint name="wrist_1_joint" value="-1.5707"/>
-        <joint name="wrist_2_joint" value="-1.5707"/>
+        <joint name="wrist_1_joint" value="-1.5708"/>
+        <joint name="wrist_2_joint" value="-1.5708"/>
         <joint name="wrist_3_joint" value="0"/>
     </group_state>
     <group_state name="home_pose_2" group="ur7e_manipulator">
-        <joint name="elbow_joint" value="1.5707"/>
-        <joint name="shoulder_lift_joint" value="-1.5707"/>
+        <joint name="elbow_joint" value="1.5708"/>
+        <joint name="shoulder_lift_joint" value="-1.5708"/>
         <joint name="shoulder_pan_joint" value="0"/>
-        <joint name="wrist_1_joint" value="-1.5707"/>
+        <joint name="wrist_1_joint" value="0"/>
         <joint name="wrist_2_joint" value="0"/>
         <joint name="wrist_3_joint" value="0"/>
     </group_state>
@@ -36,6 +36,8 @@
     <disable_collisions link1="base_link_inertia" link2="robot_arm_base_link" reason="Adjacent"/>
     <disable_collisions link1="base_link_inertia" link2="shoulder_link" reason="Adjacent"/>
     <disable_collisions link1="camera_link" link2="forearm_link" reason="Never"/>
+    <disable_collisions link1="camera_link" link2="ft300_mounting_plate" reason="Never"/>
+    <disable_collisions link1="camera_link" link2="ft300_sensor" reason="Never"/>
     <disable_collisions link1="camera_link" link2="ground_plane" reason="Adjacent"/>
     <disable_collisions link1="camera_link" link2="optical_platiform_base_link" reason="Adjacent"/>
     <disable_collisions link1="camera_link" link2="robot_arm_base_link" reason="Never"/>
@@ -49,6 +51,16 @@
     <disable_collisions link1="forearm_link" link2="upper_arm_link" reason="Adjacent"/>
     <disable_collisions link1="forearm_link" link2="wrist_1_link" reason="Adjacent"/>
     <disable_collisions link1="forearm_link" link2="wrist_2_link" reason="Never"/>
+    <disable_collisions link1="ft300_mounting_plate" link2="ft300_sensor" reason="Adjacent"/>
+    <disable_collisions link1="ft300_mounting_plate" link2="ground_plane" reason="Never"/>
+    <disable_collisions link1="ft300_mounting_plate" link2="sensers_fixture" reason="Never"/>
+    <disable_collisions link1="ft300_mounting_plate" link2="wrist_1_link" reason="Never"/>
+    <disable_collisions link1="ft300_mounting_plate" link2="wrist_2_link" reason="Never"/>
+    <disable_collisions link1="ft300_mounting_plate" link2="wrist_3_link" reason="Adjacent"/>
+    <disable_collisions link1="ft300_sensor" link2="sensers_fixture" reason="Adjacent"/>
+    <disable_collisions link1="ft300_sensor" link2="wrist_1_link" reason="Never"/>
+    <disable_collisions link1="ft300_sensor" link2="wrist_2_link" reason="Never"/>
+    <disable_collisions link1="ft300_sensor" link2="wrist_3_link" reason="Never"/>
     <disable_collisions link1="ground_plane" link2="optical_platiform_base_link" reason="Adjacent"/>
     <disable_collisions link1="ground_plane" link2="robot_arm_base_link" reason="Never"/>
     <disable_collisions link1="ground_plane" link2="shoulder_link" reason="Never"/>
@@ -61,7 +73,7 @@
     <disable_collisions link1="robot_arm_base_link" link2="shoulder_link" reason="Never"/>
     <disable_collisions link1="sensers_fixture" link2="wrist_1_link" reason="Never"/>
     <disable_collisions link1="sensers_fixture" link2="wrist_2_link" reason="Never"/>
-    <disable_collisions link1="sensers_fixture" link2="wrist_3_link" reason="Adjacent"/>
+    <disable_collisions link1="sensers_fixture" link2="wrist_3_link" reason="Never"/>
     <disable_collisions link1="shoulder_link" link2="upper_arm_link" reason="Adjacent"/>
     <disable_collisions link1="wrist_1_link" link2="wrist_2_link" reason="Adjacent"/>
     <disable_collisions link1="wrist_1_link" link2="wrist_3_link" reason="Never"/>

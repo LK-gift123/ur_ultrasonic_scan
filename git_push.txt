@@ -9,3 +9,16 @@ killall -9 gzserver
 killall -9 gzclient
 killall -9 gazebo
 
+    将夹具固定在 tool0 上
+  <joint name="fixture_joint" type="fixed">
+    <parent link="tool0"/>
+    <child link="sensers_fixture"/>   <!-- 此处 fixture_link 应与夹具 URDF 中的 link 名称一致 -->
+    <origin xyz="0.0 0.0 0.5" rpy="1.5707963267948966 0 0"/>   <!-- 根据实际安装位置调整 -->
+  </joint>
+
+  <link name="tcp_link"/>
+  <joint name="fixture_to_tcp" type="fixed">
+    <parent link="sensers_fixture"/>
+    <child link="tcp_link"/>
+    <origin xyz="0 0 0.0" rpy="0 0 0"/>  <!-- 探头相对于夹具的偏移 -->
+  </joint>

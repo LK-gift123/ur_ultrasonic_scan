@@ -94,32 +94,26 @@ def generate_launch_description():
         output='screen'
     )
 
-    load_joint_state_broadcaster = Node(
+    # 合并所有控制器到一个 spawner
+    load_controllers = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager'],
+        arguments=[
+            'joint_state_broadcaster',
+            'ur7e_manipulator_controller',
+            '--controller-manager', '/controller_manager'
+        ],
         output='screen'
     )
 
-    load_joint_trajectory_controller = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['ur7e_manipulator_controller', '--controller-manager', '/controller_manager'],
-        output='screen'
-    )
-
-    close_evt1 = RegisterEventHandler(
+    # 在机器人生成后加载所有控制器
+    close_evt = RegisterEventHandler(
         OnProcessExit(
             target_action=spawn_entity_cmd,
-            on_exit=[load_joint_state_broadcaster],
+            on_exit=[load_controllers]
         )
     )
-    close_evt2 = RegisterEventHandler(
-        OnProcessExit(
-            target_action=load_joint_state_broadcaster,
-            on_exit=[load_joint_trajectory_controller],
-        )
-    )
+
 
     ld = LaunchDescription()
     ld.add_action(start_gazebo_cmd)
@@ -127,7 +121,6 @@ def generate_launch_description():
     ld.add_action(generate_table_urdf)
     ld.add_action(table_spawn_after_generate)
     ld.add_action(spawn_entity_cmd)
-    ld.add_action(close_evt1)
-    ld.add_action(close_evt2)
+    ld.add_action(close_evt)   # 替代原来的 close_evt1 和 close_evt2
 
     return ld

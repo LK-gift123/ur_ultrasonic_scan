@@ -2,7 +2,7 @@
 controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
-    use_sim_time: true
+    use_sim_time: true   # ⭐ 修复点1：找回仿真时间同步
 
     ur7e_manipulator_controller:
       type: joint_trajectory_controller/JointTrajectoryController

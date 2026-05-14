@@ -7,7 +7,8 @@ from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
 import yaml
-
+from launch.actions import TimerAction   # 新增：用于延时启动
+from launch_ros.actions import Node      # 新增：用于标准节点启动
 
 def generate_launch_description():
 
@@ -40,7 +41,7 @@ def generate_launch_description():
     # 启动 move_group（规划核心）
     my_generate_move_group_launch(ld, moveit_config)
 
-    # 启动 RViz
+    # 启动 RViz (带有延时)
     my_generate_moveit_rviz_launch(ld, moveit_config)
 
     return ld
@@ -123,7 +124,7 @@ def my_generate_move_group_launch(ld, moveit_config):
 
 
 # ===============================
-# RViz 节点
+# RViz 节点 (修改为延时启动)
 # ===============================
 def my_generate_moveit_rviz_launch(ld, moveit_config):
 
@@ -143,11 +144,20 @@ def my_generate_moveit_rviz_launch(ld, moveit_config):
         {"use_sim_time": True}
     ]
 
-    add_debuggable_node(
-        ld,
+    # 定义标准的 RViz 节点
+    rviz_node = Node(
         package="rviz2",
         executable="rviz2",
         arguments=['-d', LaunchConfiguration("rviz_config")],
         parameters=rviz_parameters,
         output="log"
     )
+
+    # 延迟 4.0 秒启动 RViz，完美错开 move_group 的初始化高峰期
+    delayed_rviz = TimerAction(
+        period=4.0,
+        actions=[rviz_node]
+    )
+    
+    # 将延时动作添加到 Launch 描述中
+    ld.add_action(delayed_rviz)
