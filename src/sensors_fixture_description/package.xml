@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>sensers_fixture_description</name>
+  <name>sensors_fixture_description</name>
   <version>1.0.0</version>
   <description>
     URDF description for sensors fixture.
@@ -11,7 +11,15 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <exec_depend>urdf</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>gazebo_ros_pkgs</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
+    <gazebo_ros plugin_path="${prefix}/../.." gazebo_media_path="${prefix}/.." />
   </export>
 </package>

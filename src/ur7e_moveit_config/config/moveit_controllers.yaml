@@ -1,14 +1,13 @@
-# MoveIt uses this configuration for controller management
+# moveit_controllers.yaml
 moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
 
-# ⚠️ 必须保留这个专属命名空间，MoveIt 插件只认它下面的参数！
 moveit_simple_controller_manager:
   controller_names:
     - ur7e_manipulator_controller
 
   ur7e_manipulator_controller:
     type: FollowJointTrajectory
-    action_ns: follow_joint_trajectory   # 明确动作服务器的接口
+    action_ns: follow_joint_trajectory  # ⚠️ 这一行必须有，且必须和控制器对应
     default: true
     joints:
       - shoulder_pan_joint

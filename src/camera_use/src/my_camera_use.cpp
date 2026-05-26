@@ -52,8 +52,8 @@ public:
 
     // --- 1. 直通滤波 (空间裁剪) ---
     bool enable_passthrough_filter_ = true; 
-    float pass_z_min_ = 0.26f; // 【修改】从0.20提至0.25。效果：更干净地切除机械臂在高空的挥舞干扰。
-    float pass_z_max_ = 0.37f; // 【维持】包含35cm桌面。
+    float pass_z_min_ = 0.30f; // 【修改】从0.20提至0.25。效果：更干净地切除机械臂在高空的挥舞干扰。
+    float pass_z_max_ = 0.40f; // 【维持】包含35cm桌面。
     
     // --- 2. 体素降采样 (细化网格) ---
     bool enable_voxel_filter_  = true;      

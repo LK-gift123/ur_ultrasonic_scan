@@ -1,0 +1,45 @@
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot name="sensors_fixture_description">
+  <link
+    name="sensors_fixture_base_link">
+    <inertial>
+      <origin
+        xyz="0.015263 -7.6162E-18 0.022043"
+        rpy="0 0 0" />
+      <mass
+        value="0.094815" />
+      <inertia
+        ixx="7.8443E-05"
+        ixy="5.7706E-20"
+        ixz="2.756E-05"
+        iyy="0.00017657"
+        iyz="-1.8129E-20"
+        izz="0.00014058" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sensors_fixture_description/meshes/sensors_fixture.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sensors_fixture_description/meshes/sensors_fixture.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

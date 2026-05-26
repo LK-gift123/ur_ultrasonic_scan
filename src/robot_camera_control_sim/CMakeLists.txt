@@ -18,6 +18,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(std_srvs REQUIRED) # 🌟 新增这一行
 
 # ⭐ 新增：寻找 TF2 相关坐标变换包
 find_package(tf2 REQUIRED)
@@ -72,6 +73,9 @@ target_link_libraries(trajectory_planner_sim ${PCL_LIBRARIES})
 add_executable(robot_control_sim src/robot_control_sim.cpp)
 ament_target_dependencies(robot_control_sim rclcpp geometry_msgs moveit_ros_planning_interface)
 
+add_executable(servo_test_node src/servo_test_node.cpp)
+ament_target_dependencies(servo_test_node rclcpp geometry_msgs std_srvs)
+install(TARGETS servo_test_node DESTINATION lib/${PROJECT_NAME})
 # ==========================================
 # 3. 安装规则
 # ==========================================

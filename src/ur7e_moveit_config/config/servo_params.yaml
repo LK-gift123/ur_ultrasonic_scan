@@ -1,0 +1,37 @@
+/**:
+  ros__parameters:
+    moveit_servo:
+      use_sim_time: true
+      # 输入控制
+      command_in_type: "unitless" # 🌟 修复此处
+      cartesian_command_in_topic: "/servo_node/delta_twist_cmds"
+      joint_command_in_topic: "/servo_node/delta_joint_cmds"
+      
+      # 输出控制器
+      command_out_topic: "/forward_velocity_controller/commands"
+      command_out_type: "std_msgs/Float64MultiArray"
+      
+      # 控制分流
+      publish_joint_positions: false
+      publish_joint_velocities: true
+      publish_joint_accelerations: false
+      
+      # 规划组
+      move_group_name: "ur7e_manipulator"
+      planning_frame: "base_link"
+      ee_frame_name: "ft_frame"
+      robot_link_command_frame: "base_link" # 命令参考坐标系
+      
+      # 增益与安全
+      publish_period: 0.01
+      low_latency_mode: true
+      scale:
+        linear: 0.3
+        rotational: 0.8
+        joint: 0.5
+      incoming_command_timeout: 0.1
+      num_outgoing_halt_msgs_to_publish: 4
+      lower_singularity_threshold: 17.0
+      hard_stop_singularity_threshold: 30.0
+      joint_limit_margin: 0.1
+      check_collisions: false

@@ -1,4 +1,3 @@
-
 <robot name="artifacts_workpiece_description">
   <link name="workpiece_base_link">
     <inertial>

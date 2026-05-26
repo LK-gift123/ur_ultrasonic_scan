@@ -1,7 +1,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
-#include <shape_msgs/msg/solid_primitive.h>
 #include <geometry_msgs/msg/pose.h>
+// 新增：用于加载和处理 STL 网格的库
+#include <geometric_shapes/shapes.h>
+#include <geometric_shapes/mesh_operations.h>
+#include <geometric_shapes/shape_operations.h>
 
 int main(int argc, char** argv)
 {
@@ -9,39 +12,51 @@ int main(int argc, char** argv)
     auto node = std::make_shared<rclcpp::Node>("my_collision_define");
     auto logger = node->get_logger();
 
-    // 等待 move_group 完全启动，确保规划场景接收器已就绪
     rclcpp::sleep_for(std::chrono::seconds(2));
 
     moveit::planning_interface::PlanningSceneInterface psi;
 
+    // 创建碰撞对象
+    moveit_msgs::msg::CollisionObject custom_workpiece;
+    custom_workpiece.header.frame_id = "world";
+    custom_workpiece.id = "custom_surface_workpiece"; 
+
     // =======================================================
-    // 仅添加动态工件：圆柱体 (Cylinder)
-    // 地面和光学平台已在 URDF 中被原生支持，无需在此重复添加
+    // 🌟 核心修改：从 STL 文件加载网格模型 (Mesh)
     // =======================================================
-    moveit_msgs::msg::CollisionObject cylinder;
-    cylinder.header.frame_id = "world";
-    cylinder.id = "cylinder_workpiece"; // 命名更加规范
-
-    shape_msgs::msg::SolidPrimitive cylinder_primitive;
-    cylinder_primitive.type = cylinder_primitive.CYLINDER;
-    // 尺寸定义：高 0.10m，半径 0.15m (严格遵循先高度后半径的顺序)
-    cylinder_primitive.dimensions = {0.10, 0.15};  
-    cylinder.primitives.push_back(cylinder_primitive);
-
-    geometry_msgs::msg::Pose cylinder_pose;
-    cylinder_pose.orientation.w = 1.0;
-    // 工件放置位置：相对于世界原点
-    cylinder_pose.position.x = 0.8;
-    cylinder_pose.position.y = 0.8;
-    cylinder_pose.position.z = 0.85; // 平台表面高0.8 + 圆柱体中心偏移0.05
-    cylinder.primitive_poses.push_back(cylinder_pose);
-
-    cylinder.operation = cylinder.ADD;
-    psi.applyCollisionObject(cylinder);
+    Eigen::Vector3d scale(1.0, 1.0, 1.0); // 模型缩放比例，如果 SW 导出的是毫米，这里可能需要改成 0.001
     
-    RCLCPP_INFO(logger, "✅ 圆柱体待扫描工件已成功放置于光学平台上 (Z=0.85)");
+    // 注意：确保 package:// 路径与你的包名和文件结构完全一致
+    shapes::Mesh* m = shapes::createMeshFromResource("package://artifacts_workpiece_description/meshes/workpiece_base_link.STL", scale);
+    
+    if (m == nullptr) {
+        RCLCPP_ERROR(logger, "❌ 无法加载异形曲面 STL 文件，请检查路径！");
+        return 1;
+    }
 
-    // 保持节点运行一小段时间，确保 ADD 消息被 MoveIt 成功接收
+    shape_msgs::msg::Mesh mesh_msg;
+    shapes::ShapeMsg shape_msg_base;
+    shapes::constructMsgFromShape(m, shape_msg_base);
+    mesh_msg = boost::get<shape_msgs::msg::Mesh>(shape_msg_base);
+
+    // 将网格添加到碰撞对象中
+    custom_workpiece.meshes.push_back(mesh_msg);
+
+    // 设置在世界中的位置 (需与 Gazebo 里的坐标保持一致)
+    geometry_msgs::msg::Pose mesh_pose;
+    mesh_pose.orientation.w = 1.0;
+    mesh_pose.position.x = 0.0;
+    mesh_pose.position.y = 0.0;
+    mesh_pose.position.z = 0.82; 
+    custom_workpiece.mesh_poses.push_back(mesh_pose);
+
+    custom_workpiece.operation = custom_workpiece.ADD;
+    
+    // 应用到 MoveIt 规划场景
+    psi.applyCollisionObject(custom_workpiece);
+    
+    RCLCPP_INFO(logger, "✅ 异形曲面 (Mesh) 已成功加入 MoveIt 避障环境！");
+
     rclcpp::sleep_for(std::chrono::seconds(1));
     rclcpp::shutdown();
     return 0;

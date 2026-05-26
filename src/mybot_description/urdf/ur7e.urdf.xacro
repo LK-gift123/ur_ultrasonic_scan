@@ -2,8 +2,7 @@
 <robot name="ur7e" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find optical_platiform_description)/urdf/optical_platiform_description.urdf" />
   <xacro:include filename="$(find robot_arm_base_link)/urdf/robot_arm_base_link.urdf" />
-  <xacro:include filename="$(find sensers_fixture_description)/urdf/sensers_fixture_description.urdf" />
-
+  <xacro:include filename="$(find sensors_fixture_description)/urdf/sensors_fixture_description.urdf" />
 
   <link name="world"/>
 
@@ -36,11 +35,11 @@
     <child link="ground_plane"/>
   </joint>
 
-<!-- ros2_control开始地方 -->
+<!-- ros2_control 开始 -->
+
   <ros2_control name="ur7e" type="system">
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-      <plugin>mock_components/GenericSystem</plugin>
       <param name="fake_sensor_commands">False</param>
       <param name="state_following_offset">0.0</param>
       <param name="calculate_dynamics">true</param>
@@ -49,9 +48,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <command_interface name="effort"/>
-      <state_interface name="position">
-        <param name="initial_value">0.0</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
@@ -59,9 +56,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <command_interface name="effort"/>
-      <state_interface name="position">
-        <param name="initial_value">-1.57</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">-1.57</param></state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
@@ -69,9 +64,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <command_interface name="effort"/>
-      <state_interface name="position">
-        <param name="initial_value">0.0</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
@@ -79,9 +72,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <command_interface name="effort"/>
-      <state_interface name="position">
-        <param name="initial_value">-1.57</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">-1.57</param></state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
@@ -89,9 +80,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <command_interface name="effort"/>
-      <state_interface name="position">
-        <param name="initial_value">0.0</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
@@ -99,36 +88,29 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <command_interface name="effort"/>
-      <state_interface name="position">
-        <param name="initial_value">0.0</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-
     <joint name="ft300_sensor_joint">
-      <state_interface name="position">
-        <param name="initial_value">0.0</param>
-      </state_interface>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+      <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
+      <state_interface name="effort"><param name="initial_value">0.0</param></state_interface>
     </joint>
   </ros2_control>
 
-
-<!-- ros2_control结束地方 -->
+  
+<!-- ros2_control 结束 -->
 
   <link name="base_link"/>
   <link name="base_link_inertia">
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
-      <geometry>
-         <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/base.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/base.dae"/></geometry>
     </visual>
     <collision>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/base.stl"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/base.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="4.0"/>
@@ -139,15 +121,11 @@
   <link name="shoulder_link">
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/shoulder.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/shoulder.dae"/></geometry>
     </visual>
     <collision>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/shoulder.stl"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/shoulder.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="3.761"/>
@@ -158,15 +136,11 @@
   <link name="upper_arm_link">
     <visual>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.138"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/upperarm.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/upperarm.dae"/></geometry>
     </visual>
     <collision>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.138"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/upperarm.stl"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/upperarm.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="8.058"/>
@@ -177,15 +151,11 @@
   <link name="forearm_link">
     <visual>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.007"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/forearm.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/forearm.dae"/></geometry>
     </visual>
     <collision>
-       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.007"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/forearm.stl"/>
-      </geometry>
+      <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.007"/>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/forearm.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="2.846"/>
@@ -196,15 +166,11 @@
   <link name="wrist_1_link">
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.127"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/wrist1.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/wrist1.dae"/></geometry>
     </visual>
     <collision>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.127"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/wrist1.stl"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/wrist1.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="1.37"/>
@@ -215,15 +181,11 @@
   <link name="wrist_2_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 -0.0997"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/wrist2.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/wrist2.dae"/></geometry>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 -0.0997"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/wrist2.stl"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/wrist2.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="1.3"/>
@@ -234,15 +196,11 @@
   <link name="wrist_3_link">
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.0989"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/wrist3.dae"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/visual/wrist3.dae"/></geometry>
     </visual>
     <collision>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.0989"/>
-      <geometry>
-        <mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/wrist3.stl"/>
-      </geometry>
+      <geometry><mesh filename="file:///opt/ros/humble/share/ur_description/meshes/ur5e/collision/wrist3.stl"/></geometry>
     </collision>
     <inertial>
       <mass value="0.365"/>
@@ -329,7 +287,6 @@
     <child link="base"/>
   </joint>
 
-
   <link name="flange"/>
   <joint name="wrist_3-flange" type="fixed">
     <parent link="wrist_3_link"/>
@@ -354,15 +311,11 @@
       <geometry>
         <mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/visual/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
       </geometry>
-      <material name="Robotiq-Grey">
-        <color rgba="0.4 0.4 0.4 1.0"/>
-      </material>
+      <material name="Robotiq-Grey"><color rgba="0.4 0.4 0.4 1.0"/></material>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
-      </geometry>
+      <geometry><mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/></geometry>
     </collision>
   </link>
 
@@ -379,18 +332,12 @@
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/visual/robotiq_ft300.STL"/>
-      </geometry>
-      <material name="Robotiq-Black">
-        <color rgba="0.2 0.2 0.2 1.0"/>
-      </material>
+      <geometry><mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/visual/robotiq_ft300.STL"/></geometry>
+      <material name="Robotiq-Black"><color rgba="0.2 0.2 0.2 1.0"/></material>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/collision/robotiq_ft300.STL"/>
-      </geometry>
+      <geometry><mesh filename="file:///home/lk/ur_sim/install/mybot_description/share/mybot_description/meshes/collision/robotiq_ft300.STL"/></geometry>
     </collision>
   </link>
 
@@ -401,27 +348,45 @@
   </joint>
   <link name="robotiq_ft_frame_id"/>
 
-
   <link name="force_transfer_link">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0.01"/> <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
     </inertial>
   </link>
-
   <joint name="ft300_sensor_joint" type="revolute">
     <origin rpy="0 3.141592653589793 -1.5707963267948966" xyz="0 0 0"/>
     <parent link="ft300_sensor"/>
-    <child link="force_transfer_link"/> <axis xyz="0 0 1"/>
+    <child link="force_transfer_link"/> 
+    <axis xyz="0 0 1"/>
     <limit lower="0.0" upper="0.0" effort="1000.0" velocity="0.0"/>
   </joint>
 
   <joint name="fixture_joint" type="fixed">
     <parent link="force_transfer_link"/> 
-    <child link="sensers_fixture"/>
-    <origin xyz="0.0 0.0 0.0" rpy="1.5707963267948966 0 0"/>
+    <child link="sensors_fixture_base_link"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 3.141592653589793"/>
   </joint>
 
+
+  <xacro:include filename="$(find realsense2_description)/urdf/_d435i.urdf.xacro" />
+  <xacro:sensor_d435i parent="sensors_fixture_base_link" name="camera" use_nominal_extrinsics="true">
+      <origin xyz="0.1 0 0.0185" rpy="0 -1.5708 0"/> 
+  </xacro:sensor_d435i>
+
+  <link name="camera_tcp_link"/>
+  <joint name="camera_tcp_joint" type="fixed">
+    <parent link="sensors_fixture_base_link"/>
+    <child link="camera_tcp_link"/>
+    <origin xyz="0.0 0 0.0" rpy="0 -1.5708 0"/>
+  </joint>
+
+  <link name="ultrasonic_tcp_link"/>
+  <joint name="ultrasonic_tcp_joint" type="fixed">
+    <parent link="sensors_fixture_base_link"/>
+    <child link="ultrasonic_tcp_link"/>
+    <origin xyz="0.0 0.0 0.12" rpy="0 0 0"/>
+  </joint>
 
   <gazebo reference="ft300_sensor">
     <material>Gazebo/DarkGrey</material>
@@ -429,7 +394,6 @@
   <gazebo reference="ft300_mounting_plate">
     <material>Gazebo/Gray</material>
   </gazebo>
-
   <gazebo reference="ft300_sensor_joint">
     <provideFeedback>true</provideFeedback>
   </gazebo>
@@ -445,22 +409,15 @@
       <gaussian_noise>0.01</gaussian_noise>
     </plugin>
   </gazebo>
-
-  <gazebo reference="world">
-  </gazebo>
   
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">  
       <parameters>/home/lk/ur_sim/src/ur7e_moveit_config/config/ros2_controllers.yaml</parameters>
+      <use_sim_time>true</use_sim_time>   <!-- 关键：为 Gazebo 插件添加仿真时间设置 -->
       <robot_param_node>robot_state_publisher</robot_param_node>
       <robotParam>robot_description</robotParam>
     </plugin>
   </gazebo>
-
-  <xacro:include filename="$(find realsense2_description)/urdf/_d435i.urdf.xacro" />
-  <xacro:sensor_d435i parent="world" name="camera" use_nominal_extrinsics="true">
-      <origin xyz="0.4 0 2.2" rpy="0 1.5708 0"/> 
-  </xacro:sensor_d435i>
 
   <gazebo reference="camera_link">
       <sensor type="depth" name="d435i_depth_sensor">
