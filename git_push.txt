@@ -9,6 +9,10 @@ killall -9 gzserver
 killall -9 gzclient
 killall -9 gazebo
 
+ros2 control switch_controllers --activate forward_velocity_controller --deactivate ur7e_manipulator_controller
+
+conda deactivate
+
     将夹具固定在 tool0 上
   <joint name="fixture_joint" type="fixed">
     <parent link="tool0"/>
